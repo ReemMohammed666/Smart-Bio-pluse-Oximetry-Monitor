@@ -1,37 +1,112 @@
-Smart Bio Pulse Oximetry Monitor 
+Remote Sensing Blind Cane
 
-About The Project:
-A smart medical device simulator designed to monitor blood oxygen levels (SpO2) and heart rate (BPM) using Arduino, an LCD screen, a potentiometer for biosignal simulation, LEDs, and a buzzer for real-time risk alerts.
+An Arduino-based smart assistant project (smart blind stick) that uses an ultrasonic sensor to detect obstacles and provide distance-mapped audio alerts through a buzzer.
 
-How It Works
-The Arduino reads the potentiometer value to simulate real-time human pulse and oxygen signals:
+---
 
-Signal Processing: Converts the analog reading from the potentiometer into SpO2 percentage and BPM values, displaying them on the LCD screen.
+ 🛠️ Components
 
-Normal State: If oxygen levels are safe, the green LED turns ON, and a soft periodic pulse tone plays.
+Arduino UNO
 
-Danger State: If oxygen levels drop below 92%, the red LED turns ON, green LED turns OFF, and a continuous high-pitch alarm is triggered.
+HC-SR04 Ultrasonic Sensor
 
-Components Used
-Arduino Uno
+ Buzzer
 
-LiquidCrystal I2C LCD (16x2)
+Jumper Wires
 
-Potentiometer
+---
 
-Green LED
+🔌 Pin Connections
 
-Red LED
+HC-SR04 Ultrasonic Sensor:
+ `TRIG` pin connected to Digital Pin 9
 
-Buzzer
 
-Connecting Wires
+ `ECHO` pin connected to Digital Pin 8
 
-Circuit Diagram and Simulation
-Tinkercad Simulation Link:
-https://www.tinkercad.com/things/f00Mukzcf00-smart-bio-pluse-amp-oximetry-monitor
 
-Project Files
-Arduino Source Code: Smart Bio Pulse Oximetry Monitor.ino
+ `VCC` and `GND` connected to 5V and GND rails
 
-Project Documentation: Smart Bio Pulse Oximetry Monitor.pdf
+
+Buzzer:
+ Positive terminal connected to Digital Pin 10
+
+
+ Negative terminal connected to GND
+
+
+
+
+
+---
+
+ 🔗 Tinkercad Simulation
+
+👉 [View Circuit on Tinkercad] (https://www.tinkercad.com/things/f00Mukzcf00-smart-bio-pluse-amp-oximetry-monitor)
+
+---
+
+ 💻 Source Code
+
+```cpp
+const int trigPin = 9;
+const int echoPin = 8;
+const int buzzerPin = 10;
+
+long duration;
+int distance;
+
+const int dangerZone = 30;
+const int warningZone = 100;
+
+void setup()
+{
+    pinMode(trigPin, OUTPUT);
+    pinMode(echoPin, INPUT);
+    pinMode(buzzerPin, OUTPUT);
+    Serial.begin(9600);
+}
+
+void loop()
+{
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+
+    duration = pulseIn(echoPin, HIGH, 30000);
+
+    if (duration == 0)
+    {
+        distance = warningZone + 1;
+    }
+    else
+    {
+        distance = duration * 0.034 / 2;
+    }
+
+    Serial.print("Distance: ");
+    Serial.print(distance);
+    Serial.println(" cm");
+
+    if (distance <= dangerZone && distance > 0)
+    {
+        tone(buzzerPin, 1000);
+        delay(50);
+    }
+    else if (distance > dangerZone && distance <= warningZone)
+    {
+        int delayTime = map(distance, dangerZone, warningZone, 50, 400);
+
+        tone(buzzerPin, 1000);
+        delay(50);
+        noTone(buzzerPin);
+        delay(delayTime);
+    }
+    else
+    {
+        noTone(buzzerPin);
+        delay(50);
+    }
+}
